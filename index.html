@@ -57,7 +57,10 @@
     .swatch{width:9px;height:9px;display:inline-block;border-radius:2px;background:#f3d697;border:1px solid #c79f52}
     .swatch.slab{background:#8296a2;border-color:#607989}
     .swatch.pile{background:#285878;border-color:#285878}
-    .swatch.valuable{background:#cce4d5;border-color:#6b9d7b}
+    .swatch.soil{background:#f4d69e;border-color:#c79f52}
+    .swatch.clsm{background:#b9d6e5;border-color:#719eb4}
+    .swatch.ac{background:#424b54;border-color:#424b54}
+    .swatch.paving{background:#b6bfc3;border-color:#859198}
     .dimensions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;text-align:center;margin-top:10px}
     .dimensions div{padding:7px 2px;background:#edf3f6;border-radius:7px;font-size:12px;color:var(--muted)}
     .dimensions output{display:block;font-size:15px;color:var(--ink);font-weight:750;font-variant-numeric:tabular-nums}
@@ -148,10 +151,17 @@
     </section>
     <div class="right">
       <section class="panel diagram" aria-labelledby="diagram-title">
-        <div class="bar"><h2 id="diagram-title">開挖斷面</h2><span id="total-width" class="units"></span></div>
+        <div class="bar"><h2 id="diagram-title">開挖及回填斷面</h2><span id="total-width" class="units"></span></div>
         <div class="drawing">
           <canvas id="section" role="img" aria-label="開挖斷面示意圖"></canvas>
-          <div class="legend"><span><i class="swatch"></i>開挖範圍</span><span><i class="swatch valuable"></i>有價料高程範圍</span><span><i class="swatch slab"></i><span id="structure-legend">既有頂板</span></span><span><i class="swatch pile"></i><span id="edge-legend">鋼板樁內側</span></span></div>
+          <div class="legend">
+            <span><i class="swatch ac"></i><span id="ac-legend">AC 路面</span></span>
+            <span id="paving-legend" hidden><i class="swatch paving"></i>其他路面復舊層</span>
+            <span><i class="swatch soil"></i>回填土（上層）</span>
+            <span><i class="swatch clsm"></i>CLSM 回填（下層）</span>
+            <span><i class="swatch slab"></i><span id="structure-legend">既有頂板</span></span>
+            <span><i class="swatch pile"></i><span id="edge-legend">鋼板樁內側</span></span>
+          </div>
         </div>
         <div class="dimensions">
           <div>左側淨距<output id="left-dim">—</output></div>
@@ -416,6 +426,31 @@
       draw();
     }
 
+    function fillSplitDepth(values, result) {
+      const pavement = Math.min(values.paving, values.depth);
+      const target = result.soilBackfill / values.length;
+      const slope = values.slope;
+      const top = result.top;
+      const occupiedWidth = values.newCulvert || values.deepen ? values.width : 0;
+
+      // Integrate the open cross section above z, excluding pavement and occupied structure/bedding.
+      const areaAbove = z => {
+        const thickness = z - pavement;
+        const excavationArea = (top - slope * (pavement + z)) * thickness;
+        const occupiedArea = occupiedWidth * Math.max(0, z - values.depth);
+        return Math.max(0, excavationArea - occupiedArea);
+      };
+      if (target <= 0) return pavement;
+      let low = pavement;
+      let high = result.height;
+      for (let i = 0; i < 48; i++) {
+        const middle = (low + high) / 2;
+        if (areaAbove(middle) < target) low = middle;
+        else high = middle;
+      }
+      return (low + high) / 2;
+    }
+
     function draw() {
       const { width: displayWidth, height: displayHeight } = canvas.getBoundingClientRect();
       const pixels = window.devicePixelRatio || 1;
@@ -449,9 +484,20 @@
       const { values, result, sheet } = current;
       const { width, depth, slab, left, right, newCulvert } = values;
       const { height, top, slopeRun } = result;
-      const scale = Math.min((displayWidth - 106) / top, (displayHeight - 91) / (newCulvert ? height : depth + slab));
-      const pitLeft = Math.round((displayWidth - top * scale) / 2);
-      const pitRight = pitLeft + top * scale;
+      const leftWorld = -(width / 2 + left + slopeRun);
+      const rightWorld = width / 2 + right + slopeRun;
+      const millLeftWorld = values.millWidth === null ? leftWorld : -result.millingWidth / 2;
+      const millRightWorld = values.millWidth === null ? rightWorld : result.millingWidth / 2;
+      const minWorld = Math.min(leftWorld, millLeftWorld);
+      const maxWorld = Math.max(rightWorld, millRightWorld);
+      const span = maxWorld - minWorld;
+      const visibleDepth = Math.max(newCulvert ? height : depth + slab, values.ac, values.paving);
+      const scale = Math.min(Math.max(1, displayWidth - 106) / span, Math.max(1, displayHeight - 91) / visibleDepth);
+      const origin = (displayWidth - span * scale) / 2 - minWorld * scale;
+      const pitLeft = origin + leftWorld * scale;
+      const pitRight = origin + rightWorld * scale;
+      const millLeft = origin + millLeftWorld * scale;
+      const millRight = origin + millRightWorld * scale;
       const leftBottom = pitLeft + slopeRun * scale;
       const rightBottom = pitRight - slopeRun * scale;
       const structureLeft = leftBottom + left * scale;
@@ -465,26 +511,14 @@
       const boundary = '#285878';
       const dimension = '#547182';
 
-      context.fillStyle = '#e8eceb';
-      context.fillRect(0, groundY, displayWidth, displayHeight - groundY);
-      context.beginPath();
-      context.moveTo(pitLeft, groundY);
-      context.lineTo(pitRight, groundY);
-      context.lineTo(rightBottom, pitY);
-      context.lineTo(leftBottom, pitY);
-      context.closePath();
-      context.fillStyle = '#f8e4b9';
-      context.fill();
-      context.save();
-      context.clip();
-      for (let x = pitLeft - (pitY - groundY); x < pitRight; x += 13) {
-        line([[x, groundY], [x + pitY - groundY, pitY]], '#ebd2a1');
-      }
-      context.restore();
+      const pavementDepth = Math.min(values.paving, depth);
+      const acRestoredDepth = Math.min(values.ac, pavementDepth);
+      const splitDepth = fillSplitDepth(values, result);
+      byId('ac-legend').textContent = `AC 路面（刨除厚 ${fmt(values.ac)} m）`;
+      byId('paving-legend').hidden = pavementDepth <= acRestoredDepth && (pavementDepth === 0 || (millLeft <= pitLeft + 0.01 && millRight >= pitRight - 0.01));
 
-      if (result.valuableThickness > 0) {
-        const a = result.valuableStart;
-        const b = result.valuableEnd;
+      function band(a, b, color) {
+        if (b <= a) return;
         const y1 = groundY + a * scale;
         const y2 = groundY + b * scale;
         context.beginPath();
@@ -493,10 +527,46 @@
         context.lineTo(pitRight - values.slope * b * scale, y2);
         context.lineTo(pitLeft + values.slope * b * scale, y2);
         context.closePath();
-        context.fillStyle = '#cce4d5';
+        context.fillStyle = color;
         context.fill();
-        context.strokeStyle = '#6b9d7b';
-        context.stroke();
+      }
+
+      context.fillStyle = '#e8eceb';
+      context.fillRect(0, groundY, displayWidth, displayHeight - groundY);
+
+      // Existing AC within the selected milling strip outside the excavation.
+      if (values.ac > 0 && millRight > millLeft) {
+        context.fillStyle = '#424b54';
+        context.fillRect(millLeft, groundY, millRight - millLeft, values.ac * scale);
+      }
+
+      band(0, pavementDepth, '#b6bfc3');
+      band(pavementDepth, splitDepth, '#f4d69e');
+      band(splitDepth, height, '#b9d6e5');
+
+      // AC within the restored pavement is limited by the pavement allowance.
+      if (acRestoredDepth > 0 && millRight > millLeft) {
+        context.beginPath();
+        context.moveTo(pitLeft, groundY);
+        context.lineTo(pitRight, groundY);
+        context.lineTo(pitRight - values.slope * acRestoredDepth * scale, groundY + acRestoredDepth * scale);
+        context.lineTo(pitLeft + values.slope * acRestoredDepth * scale, groundY + acRestoredDepth * scale);
+        context.closePath();
+        context.save();
+        context.clip();
+        context.fillStyle = '#424b54';
+        context.fillRect(millLeft, groundY, millRight - millLeft, acRestoredDepth * scale);
+        context.restore();
+      }
+
+      // The milling boundary remains visible if its depth differs from the restored AC.
+      if (values.ac > acRestoredDepth && millRight > millLeft) {
+        context.save();
+        context.setLineDash([4, 3]);
+        context.strokeStyle = '#424b54';
+        context.lineWidth = 1;
+        context.strokeRect(millLeft, groundY, millRight - millLeft, values.ac * scale);
+        context.restore();
       }
 
       line([[0, groundY], [pitLeft, groundY]], '#70858b', 1.5);
@@ -537,6 +607,27 @@
         }
       }
 
+      function fillCaption(label, start, end, color) {
+        const clearEnd = Math.min(end, depth);
+        if ((clearEnd - start) * scale >= 21) {
+          const z = (start + clearEnd) / 2;
+          if ((top - 2 * values.slope * z) * scale >= 78) {
+            caption(label, (pitLeft + pitRight) / 2, groundY + z * scale + 4, color);
+          }
+        } else if ((end - Math.max(start, depth)) * scale >= 21) {
+          const z = (Math.max(start, depth) + end) / 2;
+          const leftEdge = pitLeft + values.slope * z * scale;
+          const rightEdge = pitRight - values.slope * z * scale;
+          if (structureLeft - leftEdge >= 82) {
+            caption(label, (leftEdge + structureLeft) / 2, groundY + z * scale + 4, color);
+          } else if (rightEdge - structureRight >= 82) {
+            caption(label, (structureRight + rightEdge) / 2, groundY + z * scale + 4, color);
+          }
+        }
+      }
+      fillCaption('回填土', pavementDepth, splitDepth, '#7a531c');
+      fillCaption('CLSM 回填', splitDepth, height, '#245575');
+
       line([[pitLeft, 31], [pitRight, 31]], dimension);
       for (const x of [pitLeft, pitRight]) line([[x, 26], [x, 36]], dimension);
       caption(`${fmt(top)} m`, (pitLeft + pitRight) / 2, 22);
@@ -552,7 +643,7 @@
         context.restore();
       }
 
-      canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。`);
+      canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。AC 刨除厚度 ${fmt(values.ac)} 公尺，回填土及 CLSM 各 ${fmt(result.fill)} 立方公尺。`);
     }
 
     for (const button of copyButtons) button.addEventListener('click', () => copyQuantity(button));
