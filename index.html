@@ -72,6 +72,8 @@
     .metric .unit{padding-left:2px;padding-right:0}
     .copy-button{font:inherit;font-size:13px;font-weight:600;color:var(--blue);border:1px solid #b9cbd4;background:white;border-radius:7px;padding:5px 9px;cursor:pointer;white-space:nowrap}
     .copy-button:hover:not(:disabled){background:#eaf2f7;border-color:var(--blue)}
+    .copy-button.is-copied{background:#e3f4e8;border-color:#43905f;color:#22643a}
+    .copy-button.is-copy-failed{background:#fff0ea;border-color:#c56a53;color:#92351c}
     .copy-button:disabled{opacity:.45;cursor:default}
     .metric .copy-button{display:block;margin-top:6px;width:100%}
     .copy-status{font-size:13px;color:var(--blue);min-height:20px;margin-top:8px}
@@ -265,7 +267,24 @@
     const areaFmt = value => areaFormatter.format(value);
     let current = null;
 
-    async function copyText(text, label) {
+    const copyFeedback = new WeakMap();
+
+    function showCopyFeedback(button, success) {
+      const previous = copyFeedback.get(button);
+      const original = previous?.original ?? button.textContent;
+      if (previous) clearTimeout(previous.timer);
+      button.textContent = success ? '已複製 ✓' : '複製失敗';
+      button.classList.toggle('is-copied', success);
+      button.classList.toggle('is-copy-failed', !success);
+      const timer = setTimeout(() => {
+        button.textContent = original;
+        button.classList.remove('is-copied', 'is-copy-failed');
+        copyFeedback.delete(button);
+      }, 1800);
+      copyFeedback.set(button, { original, timer });
+    }
+
+    async function copyText(text, label, button) {
       const status = byId('copy-status');
       try {
         if (!navigator.clipboard) throw new Error('Clipboard unavailable');
@@ -284,17 +303,19 @@
         }
         if (!copied) {
           status.textContent = '無法自動複製，請手動選取內容。';
+          showCopyFeedback(button, false);
           return;
         }
       }
-      status.textContent = '已複製' + label;
+      status.textContent = '已複製 ' + label;
+      showCopyFeedback(button, true);
     }
 
     function copyQuantity(button) {
       if (!current) return;
       const value = current.result[quantities[button.dataset.copyQty]];
       const name = button.closest('.metric').querySelector('h3').textContent;
-      copyText(copyFormat.format(value), name);
+      copyText(copyFormat.format(value), name, button);
     }
 
     function copyAll() {
@@ -308,7 +329,7 @@
         ['回填土', result.soilBackfill]
       ];
       const rows = selected.map(([name, value]) => `${name}: ${copyFormat.format(value)}m2`);
-      copyText(rows.join('\n'), '五項工程數量');
+      copyText(rows.join('\n'), '五項工程數量', byId('copy-all'));
     }
 
     function setFormula(rows) {
@@ -325,7 +346,7 @@
           button.className = 'copy-button formula-copy';
           button.textContent = '複製';
           button.setAttribute('aria-label', '複製' + key + '計算式');
-          button.addEventListener('click', () => copyText(value, key + '計算式'));
+          button.addEventListener('click', () => copyText(value, key + '計算式', button));
           row.append(button);
         }
         return row;
