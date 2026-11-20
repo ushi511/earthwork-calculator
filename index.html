@@ -160,7 +160,7 @@
         </div>
       </section>
       <section class="panel results" aria-labelledby="results-title">
-        <div class="bar"><h2 id="results-title">工程數量</h2><button class="copy-button" id="copy-all" type="button" disabled>複製全部</button></div>
+        <div class="bar"><h2 id="results-title">工程數量</h2><button class="copy-button" id="copy-all" type="button" disabled>複製五項</button></div>
         <div class="results-grid">
           <div class="metric"><h3>土方挖方</h3><output id="soil-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="soil" aria-label="複製土方挖方" disabled>複製</button></div>
           <div class="metric"><h3>CLSM 回填</h3><output id="fill-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="fill" aria-label="複製CLSM 回填" disabled>複製</button></div>
@@ -289,12 +289,16 @@
 
     function copyAll() {
       if (!current) return;
-      const rows = copyButtons.filter(button => !button.closest('.metric').hidden).map(button => {
-        const metric = button.closest('.metric');
-        const value = current.result[quantities[button.dataset.copyQty]];
-        return [metric.querySelector('h3').textContent, copyFormat.format(value), metric.querySelector('.unit').textContent].join('\t');
-      });
-      copyText(rows.join('\n'), '全部工程數量');
+      const { values, result } = current;
+      const selected = [
+        ['挖方', result.soil],
+        ['廢方', result.waste],
+        ['回填土', result.soilBackfill],
+        ['CLSM回填', result.fill],
+        ['構造物打除', values.newCulvert ? 0 : result.slabVolume]
+      ];
+      const rows = selected.map(([name, value]) => [name, copyFormat.format(value), 'm³'].join('\t'));
+      copyText(rows.join('\n'), '五項工程數量');
     }
 
     function setFormula(rows) {
