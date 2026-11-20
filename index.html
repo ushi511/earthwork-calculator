@@ -646,11 +646,61 @@
       canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。AC 刨除厚度 ${fmt(values.ac)} 公尺，回填土及 CLSM 各 ${fmt(result.fill)} 立方公尺。`);
     }
 
+    const inputStorageKey = 'earthwork-calculator:inputs:v1';
+    const savedControls = [...form.querySelectorAll('input[name], select[name]')];
+
+    function saveInputs() {
+      try {
+        const values = {};
+        for (const field of savedControls) {
+          if (field.type === 'radio') {
+            if (field.checked) values[field.name] = field.value;
+          } else if (field.type === 'checkbox') {
+            values[field.name] = field.checked;
+          } else {
+            values[field.name] = field.value;
+          }
+        }
+        localStorage.setItem(inputStorageKey, JSON.stringify(values));
+      } catch {
+        // The calculator remains usable when browser storage is unavailable.
+      }
+    }
+
+    function restoreInputs() {
+      try {
+        const values = JSON.parse(localStorage.getItem(inputStorageKey) || 'null');
+        if (!values || typeof values !== 'object') return;
+        for (const field of savedControls) {
+          if (!Object.hasOwn(values, field.name)) continue;
+          const value = values[field.name];
+          if (field.type === 'radio') {
+            if (field.value === value) field.checked = true;
+          } else if (field.type === 'checkbox') {
+            if (typeof value === 'boolean') field.checked = value;
+          } else if (typeof value === 'string') {
+            if (field.type === 'select-one' && ![...field.options].some(option => option.value === value)) continue;
+            field.value = value;
+          }
+        }
+      } catch {
+        // Ignore unavailable or invalid saved data and use the example values.
+      }
+    }
+
     for (const button of copyButtons) button.addEventListener('click', () => copyQuantity(button));
     byId('copy-all').addEventListener('click', copyAll);
-    form.addEventListener('input', update);
+    form.addEventListener('input', () => {
+      update();
+      saveInputs();
+    });
+    form.addEventListener('change', saveInputs);
     form.addEventListener('submit', event => event.preventDefault());
-    form.addEventListener('reset', () => requestAnimationFrame(update));
+    form.addEventListener('reset', () => requestAnimationFrame(() => {
+      update();
+      saveInputs();
+    }));
+    restoreInputs();
     new ResizeObserver(draw).observe(canvas);
     update();
   </script>
