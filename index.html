@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="估算箱涵頂板修復的挖方、頂板打除、廢方、CLSM 回填與 AC 刨除料，並即時查看開挖斷面。">
-  <title>頂板修復挖方計算機</title>
+  <meta name="description" content="估算頂板修復及新設箱涵的挖方、混凝土、廢方、CLSM 回填與 AC 刨除料，並即時查看開挖斷面。">
+  <title>箱涵挖方計算機</title>
   <style>
     :root{color-scheme:light;--ink:#172c3d;--muted:#4d6372;--paper:#f0f3f4;--line:#d8e1e5;--navy:#102c42;--blue:#1e5775;--sand:#f2cc80;--panel:#fff;--radius:15px}
     *{box-sizing:border-box}
@@ -65,8 +65,17 @@
     .metric h3{font-size:12px;margin-bottom:2px;color:var(--muted)}
     .metric output{font-size:clamp(17px,2.25vw,25px);letter-spacing:-.04em;overflow-wrap:anywhere;font-weight:750;font-variant-numeric:tabular-nums}
     .metric .unit{padding-left:2px;padding-right:0}
+    .copy-button{font:inherit;font-size:13px;font-weight:600;color:var(--blue);border:1px solid #b9cbd4;background:white;border-radius:7px;padding:5px 9px;cursor:pointer;white-space:nowrap}
+    .copy-button:hover:not(:disabled){background:#eaf2f7;border-color:var(--blue)}
+    .copy-button:disabled{opacity:.45;cursor:default}
+    .metric .copy-button{display:block;margin-top:6px;width:100%}
+    .copy-status{font-size:13px;color:var(--blue);min-height:20px;margin-top:8px}
+    .formula-copy{align-self:start}
+    .project-switch{margin-bottom:10px}
+    #new-fields{margin-top:12px}
+    #new-fields .hint{margin-bottom:3px}
     dl{margin:0;font-size:13px}
-    dl div{display:grid;grid-template-columns:minmax(106px,.36fr) 1fr;gap:6px;padding:5px 0;border-bottom:1px solid #e6ecef}
+    dl div{display:grid;grid-template-columns:minmax(80px,.36fr) minmax(0,1fr) auto;gap:6px;padding:5px 0;border-bottom:1px solid #e6ecef}
     dt{font-weight:700}dd{margin:0;overflow-wrap:anywhere}
     .note{margin-top:9px}
     [hidden]{display:none!important}
@@ -76,23 +85,37 @@
 </head>
 <body>
   <header><div class="header-inner">
-    <h1>頂板修復挖方計算機</h1>
-    <p>箱涵頂板修復工程 · 開挖斷面與數量估算</p>
+    <h1>箱涵挖方計算機</h1>
+    <p>頂板修復與新設箱涵 · 開挖斷面與數量估算</p>
   </div></header>
   <main>
     <section class="panel settings" aria-labelledby="settings-title">
       <div class="bar"><h2 id="settings-title">施工條件</h2><button class="reset" type="reset" form="inputs">還原示例</button></div>
       <form id="inputs">
+        <fieldset class="switch project-switch" aria-label="工程類型">
+          <label><input type="radio" name="project" value="repair" checked><span>頂板修復</span></label>
+          <label><input type="radio" name="project" value="new"><span>新設箱涵</span></label>
+        </fieldset>
         <fieldset class="switch" aria-label="開挖工法">
           <label><input type="radio" name="method" value="sheet" checked><span>鋼板樁直開挖</span></label>
           <label><input type="radio" name="method" value="slope"><span>放坡明挖</span></label>
         </fieldset>
         <div class="grid">
           <label class="field"><span class="field-title">修復長度</span><span class="control"><input name="length" type="number" value="20" min="0.01" step="any" required><span class="unit">m</span></span></label>
-          <label class="field"><span class="field-title">構造物外寬</span><span class="control"><input name="width" type="number" value="2.10" min="0.01" step="any" required><span class="unit">m</span></span></label>
+          <label class="field" id="repair-width-field"><span class="field-title">構造物外寬</span><span class="control"><input name="width" type="number" value="2.10" min="0.01" step="any" required><span class="unit">m</span></span></label>
           <label class="field"><span class="field-title">地面至頂板頂面深度</span><span class="control"><input name="depth" type="number" value="1.80" min="0" step="any" required><span class="unit">m</span></span></label>
-          <label class="field"><span class="field-title">既有頂板厚度</span><span class="control"><input name="slab" type="number" value="0.30" min="0.01" step="any" required><span class="unit">m</span></span></label>
+          <label class="field"><span class="field-title" id="slab-title">既有頂板厚度</span><span class="control"><input name="slab" type="number" value="0.30" min="0.01" step="any" required><span class="unit">m</span></span></label>
         </div>
+        <fieldset id="new-fields" hidden disabled>
+          <div class="grid">
+            <label class="field"><span class="field-title">箱涵內寬</span><span class="control"><input name="innerWidth" type="number" value="1.50" min="0.01" step="any" required><span class="unit">m</span></span></label>
+            <label class="field"><span class="field-title">箱涵內高</span><span class="control"><input name="innerHeight" type="number" value="1.50" min="0.01" step="any" required><span class="unit">m</span></span></label>
+            <label class="field"><span class="field-title">側牆厚度（單側）</span><span class="control"><input name="wall" type="number" value="0.25" min="0.01" step="any" required><span class="unit">m</span></span></label>
+            <label class="field"><span class="field-title">底板厚度</span><span class="control"><input name="bottomSlab" type="number" value="0.25" min="0.01" step="any" required><span class="unit">m</span></span></label>
+            <label class="field full"><span class="field-title">基礎墊層厚度</span><span class="control"><input name="bedding" type="number" value="0.10" min="0" step="any" required><span class="unit">m</span></span></label>
+          </div>
+          <p class="hint">箱涵外寬由內寬加兩側牆厚計算，墊層寬度暫按箱涵外寬。</p>
+        </fieldset>
         <fieldset class="clearances" aria-labelledby="clearance-title">
           <h3 id="clearance-title">構造物與鋼板樁間距</h3>
           <div class="grid">
@@ -105,7 +128,7 @@
           <label class="field"><span class="field-title">放坡水平比（垂直 1：水平）</span><span class="control"><input name="slope" type="number" value="0.50" min="0" step="any" required disabled><span class="unit">倍</span></span></label>
           <p class="hint">左右兩邊使用同一坡比。</p>
         </div>
-        <label class="check"><input type="checkbox" name="deepen">兩側開挖至頂板底面</label>
+        <label class="check" id="deepen-field"><input type="checkbox" name="deepen">兩側開挖至頂板底面</label>
         <details id="additional">
           <summary>路面與土方設定</summary>
           <div class="grid">
@@ -124,7 +147,7 @@
         <div class="bar"><h2 id="diagram-title">開挖斷面</h2><span id="total-width" class="units"></span></div>
         <div class="drawing">
           <canvas id="section" role="img" aria-label="開挖斷面示意圖"></canvas>
-          <div class="legend"><span><i class="swatch"></i>開挖範圍</span><span><i class="swatch slab"></i>既有頂板</span><span><i class="swatch pile"></i><span id="edge-legend">鋼板樁內側</span></span></div>
+          <div class="legend"><span><i class="swatch"></i>開挖範圍</span><span><i class="swatch slab"></i><span id="structure-legend">既有頂板</span></span><span><i class="swatch pile"></i><span id="edge-legend">鋼板樁內側</span></span></div>
         </div>
         <div class="dimensions">
           <div>左側淨距<output id="left-dim">—</output></div>
@@ -133,19 +156,21 @@
         </div>
       </section>
       <section class="panel results" aria-labelledby="results-title">
-        <div class="bar"><h2 id="results-title">工程數量</h2></div>
+        <div class="bar"><h2 id="results-title">工程數量</h2><button class="copy-button" id="copy-all" type="button" disabled>複製全部</button></div>
         <div class="results-grid">
-          <div class="metric"><h3>土方挖方</h3><output id="soil-qty">—</output><span class="unit">m³</span></div>
-          <div class="metric"><h3>CLSM 回填</h3><output id="fill-qty">—</output><span class="unit">m³</span></div>
-          <div class="metric"><h3>頂板打除</h3><output id="slab-qty">—</output><span class="unit">m³</span></div>
-          <div class="metric"><h3>土方廢方</h3><output id="waste-qty">—</output><span class="unit">m³</span></div>
-          <div class="metric"><h3>AC 刨除料</h3><output id="ac-qty">—</output><span class="unit">m³</span></div>
-          <div class="metric"><h3>AC 刨除面積</h3><output id="area-qty">—</output><span class="unit">m²</span></div>
+          <div class="metric"><h3>土方挖方</h3><output id="soil-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="soil" aria-label="複製土方挖方" disabled>複製</button></div>
+          <div class="metric"><h3>CLSM 回填</h3><output id="fill-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="fill" aria-label="複製CLSM 回填" disabled>複製</button></div>
+          <div class="metric"><h3 id="slab-metric-title">頂板打除</h3><output id="slab-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="slab" aria-label="複製頂板打除" disabled>複製</button></div>
+          <div class="metric"><h3>土方廢方</h3><output id="waste-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="waste" aria-label="複製土方廢方" disabled>複製</button></div>
+          <div class="metric"><h3>AC 刨除料</h3><output id="ac-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="ac" aria-label="複製AC 刨除料" disabled>複製</button></div>
+          <div class="metric"><h3>AC 刨除面積</h3><output id="area-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="area" aria-label="複製AC 刨除面積" disabled>複製</button></div>
+          <div class="metric" id="bedding-metric" hidden><h3>基礎墊層</h3><output id="bedding-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="bedding" aria-label="複製基礎墊層" disabled>複製</button></div>
         </div>
+        <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
         <details>
           <summary>查看計算式</summary>
           <dl id="formulas"></dl>
-          <p class="note">頂板以全寬、等厚打除及原尺寸復建計算。數量採幾何體積，未加鬆方係數。混凝土與 AC 分列，土方廢方不含兩者。</p>
+          <p class="note" id="calculation-note">頂板以全寬、等厚打除及原尺寸復建計算。數量採幾何體積，未加鬆方係數。混凝土與 AC 分列，土方廢方不含兩者。</p>
         </details>
       </section>
     </div>
@@ -153,18 +178,22 @@
   <script>
     function calculate(values) {
       const { length, width, depth, slab, left, right, slope, deepen, ac, paving, millWidth, reuse } = values;
-      const height = depth + (deepen ? slab : 0);
+      const outerHeight = values.newCulvert ? slab + values.innerHeight + values.bottomSlab : slab;
+      const height = values.newCulvert ? depth + outerHeight + values.bedding : depth + (deepen ? slab : 0);
       const bottom = width + left + right;
       const slopeRun = slope * height;
       const top = bottom + 2 * slopeRun;
       const gross = (bottom + top) / 2 * height * length;
       const slabVolume = width * slab * length;
-      const slabInPit = deepen ? slabVolume : 0;
+      const slabInPit = !values.newCulvert && deepen ? slabVolume : 0;
+      const structureVolume = values.newCulvert ? width * outerHeight * length : slabInPit;
+      const concreteVolume = values.newCulvert ? (width * outerHeight - values.innerWidth * values.innerHeight) * length : slabVolume;
+      const beddingVolume = values.newCulvert ? width * values.bedding * length : 0;
       const millingWidth = millWidth ?? top;
       const millingArea = millingWidth * length;
       const acVolume = millingArea * ac;
 
-      const acDepth = Math.min(ac, depth);
+      const acDepth = Math.min(ac, values.newCulvert ? height : depth);
       const acAreaInPit = millWidth === null
         ? acDepth * (top - slope * acDepth)
         : [left, right].reduce((sum, gap) => {
@@ -181,10 +210,10 @@
       const pavingDepth = Math.min(paving, depth);
       const pavingInPit = pavingDepth * (top - slope * pavingDepth) * length;
       const soil = Math.max(0, gross - slabInPit - acInPit);
-      const fill = Math.max(0, gross - slabInPit - pavingInPit);
+      const fill = Math.max(0, gross - structureVolume - beddingVolume - pavingInPit);
       const waste = Math.max(0, soil - reuse);
 
-      return { height, bottom, top, slopeRun, gross, slabVolume, slabInPit, millingWidth, millingArea, acVolume, acInPit, pavingInPit, soil, fill, waste };
+      return { height, bottom, top, slopeRun, gross, slabVolume, slabInPit, outerHeight, structureVolume, concreteVolume, beddingVolume, millingWidth, millingArea, acVolume, acInPit, pavingInPit, soil, fill, waste };
     }
 
     const byId = id => document.getElementById(id);
@@ -193,8 +222,53 @@
     const canvas = byId('section');
     const formatter = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmt = value => formatter.format(value);
-    const lengths = ['length', 'width', 'depth', 'slab', 'left', 'right', 'ac', 'paving', 'reuse'];
+    const lengths = ['length', 'width', 'depth', 'slab', 'left', 'right', 'ac', 'paving', 'reuse', 'innerWidth', 'innerHeight', 'wall', 'bottomSlab', 'bedding'];
+    const quantities = { soil: 'soil', fill: 'fill', slab: 'concreteVolume', waste: 'waste', ac: 'acVolume', area: 'millingArea', bedding: 'beddingVolume' };
+    const copyButtons = [...document.querySelectorAll('[data-copy-qty]')];
+    const copyFormat = new Intl.NumberFormat('zh-TW', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let current = null;
+
+    async function copyText(text, label) {
+      const status = byId('copy-status');
+      try {
+        if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const textarea = document.createElement('textarea');
+        const active = document.activeElement;
+        textarea.value = text;
+        textarea.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.append(textarea);
+        textarea.select();
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch { copied = false; } finally {
+          textarea.remove();
+          active?.focus();
+        }
+        if (!copied) {
+          status.textContent = '無法自動複製，請手動選取內容。';
+          return;
+        }
+      }
+      status.textContent = '已複製' + label;
+    }
+
+    function copyQuantity(button) {
+      if (!current) return;
+      const value = current.result[quantities[button.dataset.copyQty]];
+      const name = button.closest('.metric').querySelector('h3').textContent;
+      copyText(copyFormat.format(value), name);
+    }
+
+    function copyAll() {
+      if (!current) return;
+      const rows = copyButtons.filter(button => !button.closest('.metric').hidden).map(button => {
+        const metric = button.closest('.metric');
+        const value = current.result[quantities[button.dataset.copyQty]];
+        return [metric.querySelector('h3').textContent, copyFormat.format(value), metric.querySelector('.unit').textContent].join('\t');
+      });
+      copyText(rows.join('\n'), '全部工程數量');
+    }
 
     function setFormula(rows) {
       byId('formulas').replaceChildren(...rows.map(([key, value]) => {
@@ -204,12 +278,35 @@
         term.textContent = key;
         detail.textContent = value;
         row.append(term, detail);
+        if (current) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-button formula-copy';
+          button.textContent = '複製';
+          button.setAttribute('aria-label', '複製' + key + '計算式');
+          button.addEventListener('click', () => copyText(value, key + '計算式'));
+          row.append(button);
+        }
         return row;
       }));
     }
 
     function update() {
+      const newCulvert = fields.project.value === 'new';
       const sheet = fields.method.value === 'sheet';
+      byId('new-fields').hidden = !newCulvert;
+      byId('new-fields').disabled = !newCulvert;
+      byId('repair-width-field').hidden = newCulvert;
+      fields.width.disabled = newCulvert;
+      byId('deepen-field').hidden = newCulvert;
+      fields.deepen.disabled = newCulvert;
+      byId('slab-title').textContent = newCulvert ? '頂板厚度' : '既有頂板厚度';
+      byId('slab-metric-title').textContent = newCulvert ? '箱涵混凝土' : '頂板打除';
+      byId('structure-legend').textContent = newCulvert ? '新設箱涵' : '既有頂板';
+      byId('bedding-metric').hidden = !newCulvert;
+      byId('calculation-note').textContent = newCulvert
+        ? '新設箱涵以完整外包體積（含內部空間）扣除回填，混凝土體積以外包減內空計算。墊層以箱涵外寬計算，數量未加鬆方係數。'
+        : '頂板以全寬、等厚打除及原尺寸復建計算。數量採幾何體積，未加鬆方係數。混凝土與 AC 分列，土方廢方不含兩者。';
       byId('slope-field').hidden = sheet;
       fields.slope.disabled = sheet;
       byId('clearance-title').textContent = sheet ? '構造物與鋼板樁間距' : '構造物與坡腳間距';
@@ -219,10 +316,12 @@
       const invalid = Array.from(fields).find(field => field.willValidate && !field.validity.valid);
       const values = Object.fromEntries(lengths.map(name => [name, fields.namedItem(name).valueAsNumber]));
       Object.assign(values, {
+        newCulvert,
         slope: sheet ? 0 : fields.slope.valueAsNumber,
-        deepen: fields.deepen.checked,
+        deepen: !newCulvert && fields.deepen.checked,
         millWidth: fields.millWidth.value === '' ? null : fields.millWidth.valueAsNumber
       });
+      if (newCulvert) values.width = values.innerWidth + 2 * values.wall;
       const result = invalid ? null : calculate(values);
       let message = '';
       if (invalid) {
@@ -237,7 +336,12 @@
       byId('error').hidden = message === '';
       current = !message ? { values, result, sheet } : null;
 
-      const quantities = { soil: 'soil', fill: 'fill', slab: 'slabVolume', waste: 'waste', ac: 'acVolume', area: 'millingArea' };
+      byId('copy-status').textContent = '';
+      byId('copy-all').disabled = !current;
+      for (const button of copyButtons) {
+        button.disabled = !current || button.closest('.metric').hidden;
+        button.setAttribute('aria-label', '複製' + button.closest('.metric').querySelector('h3').textContent);
+      }
       for (const [id, key] of Object.entries(quantities)) {
         byId(`${id}-qty`).textContent = current ? fmt(result[key]) : '—';
       }
@@ -249,14 +353,26 @@
         ? `${sheet ? '開挖寬度' : '開挖頂寬'} ${fmt(result.top)} m`
         : '等待有效尺寸';
       setFormula(current ? [
+        ...(newCulvert ? [
+          ['箱涵外寬', `${fmt(values.innerWidth)} ＋ 2 × ${fmt(values.wall)} ＝ ${fmt(values.width)} m`],
+          ['開挖深度', `${fmt(values.depth)} ＋ ${fmt(values.slab)} ＋ ${fmt(values.innerHeight)} ＋ ${fmt(values.bottomSlab)} ＋ ${fmt(values.bedding)} ＝ ${fmt(result.height)} m`]
+        ] : []),
         ['開挖底寬', `${fmt(values.width)} ＋ ${fmt(values.left)} ＋ ${fmt(values.right)} ＝ ${fmt(result.bottom)} m`],
         ['開挖頂寬', `${fmt(result.bottom)} ＋ 2 × ${fmt(result.height)} × ${fmt(values.slope)} ＝ ${fmt(result.top)} m`],
         ['開挖斷面體積', `（${fmt(result.bottom)} ＋ ${fmt(result.top)}）÷ 2 × ${fmt(result.height)} × ${fmt(values.length)} ＝ ${fmt(result.gross)} m³`],
-        ['土方挖方', `開挖斷面體積 ${fmt(result.gross)} − 坑內既有頂板 ${fmt(result.slabInPit)} − 坑內 AC 刨除料 ${fmt(result.acInPit)} ＝ ${fmt(result.soil)} m³`],
-        ['CLSM 回填', `開挖斷面體積 ${fmt(result.gross)} − 坑內復建頂板 ${fmt(result.slabInPit)} − 路面復舊預留 ${fmt(result.pavingInPit)} ＝ ${fmt(result.fill)} m³`],
-        ['頂板打除', `${fmt(values.width)} × ${fmt(values.slab)} × ${fmt(values.length)} ＝ ${fmt(result.slabVolume)} m³`],
+        ...(newCulvert ? [
+          ['土方挖方', `開挖斷面體積 ${fmt(result.gross)} − 坑內 AC 刨除料 ${fmt(result.acInPit)} ＝ ${fmt(result.soil)} m³`],
+          ['CLSM 回填', `開挖斷面體積 ${fmt(result.gross)} − 箱涵外包體積 ${fmt(result.structureVolume)} − 墊層 ${fmt(result.beddingVolume)} − 路面復舊預留 ${fmt(result.pavingInPit)} ＝ ${fmt(result.fill)} m³`],
+          ['箱涵混凝土', `（${fmt(values.width)} × ${fmt(result.outerHeight)} − ${fmt(values.innerWidth)} × ${fmt(values.innerHeight)}）× ${fmt(values.length)} ＝ ${fmt(result.concreteVolume)} m³`],
+          ['基礎墊層', `${fmt(values.width)} × ${fmt(values.bedding)} × ${fmt(values.length)} ＝ ${fmt(result.beddingVolume)} m³`]
+        ] : [
+          ['土方挖方', `開挖斷面體積 ${fmt(result.gross)} − 坑內既有頂板 ${fmt(result.slabInPit)} − 坑內 AC 刨除料 ${fmt(result.acInPit)} ＝ ${fmt(result.soil)} m³`],
+          ['CLSM 回填', `開挖斷面體積 ${fmt(result.gross)} − 坑內復建頂板 ${fmt(result.slabInPit)} − 路面復舊預留 ${fmt(result.pavingInPit)} ＝ ${fmt(result.fill)} m³`],
+          ['頂板打除', `${fmt(values.width)} × ${fmt(values.slab)} × ${fmt(values.length)} ＝ ${fmt(result.slabVolume)} m³`]
+        ]),
         ['土方廢方', `${fmt(result.soil)} − ${fmt(values.reuse)} ＝ ${fmt(result.waste)} m³`],
-        ['AC 刨除料', `${fmt(result.millingWidth)} × ${fmt(values.length)} × ${fmt(values.ac)} ＝ ${fmt(result.acVolume)} m³`]
+        ['AC 刨除料', `${fmt(result.millingWidth)} × ${fmt(values.length)} × ${fmt(values.ac)} ＝ ${fmt(result.acVolume)} m³`],
+        ['AC 刨除面積', `${fmt(result.millingWidth)} × ${fmt(values.length)} ＝ ${fmt(result.millingArea)} m²`]
       ] : [['計算式', '請先輸入有效尺寸。']]);
       draw();
     }
@@ -292,9 +408,9 @@
         return;
       }
       const { values, result, sheet } = current;
-      const { width, depth, slab, left, right } = values;
+      const { width, depth, slab, left, right, newCulvert } = values;
       const { height, top, slopeRun } = result;
-      const scale = Math.min((displayWidth - 106) / top, (displayHeight - 91) / (depth + slab));
+      const scale = Math.min((displayWidth - 106) / top, (displayHeight - 91) / (newCulvert ? height : depth + slab));
       const pitLeft = Math.round((displayWidth - top * scale) / 2);
       const pitRight = pitLeft + top * scale;
       const leftBottom = pitLeft + slopeRun * scale;
@@ -306,6 +422,7 @@
       const slabY = groundY + depth * scale;
       const slabPixels = slab * scale;
       const bottomOfSlab = slabY + slabPixels;
+      const bottomOfStructure = slabY + result.outerHeight * scale;
       const boundary = '#285878';
       const dimension = '#547182';
 
@@ -329,22 +446,39 @@
       line([[0, groundY], [pitLeft, groundY]], '#70858b', 1.5);
       line([[pitRight, groundY], [displayWidth, groundY]], '#70858b', 1.5);
       line([[leftBottom, pitY], [rightBottom, pitY]], boundary);
-      const edgeY = sheet ? Math.min(displayHeight - 7, Math.max(pitY + 15, bottomOfSlab + 12)) : pitY;
+      const edgeY = sheet ? Math.min(displayHeight - 7, Math.max(pitY + 15, bottomOfStructure + 12)) : pitY;
       line([[pitLeft, groundY - (sheet ? 4 : 0)], [leftBottom, edgeY]], boundary, 2.5);
       line([[pitRight, groundY - (sheet ? 4 : 0)], [rightBottom, edgeY]], boundary, 2.5);
       if (left * scale > 6) line([[leftBottom + 3, slabY], [structureLeft - 3, slabY]], dimension);
       if (right * scale > 6) line([[structureRight + 3, slabY], [rightBottom - 3, slabY]], dimension);
 
       context.fillStyle = '#8296a2';
-      context.fillRect(structureLeft, slabY, structureRight - structureLeft, Math.max(1.5, slabPixels));
       context.strokeStyle = '#455c6a';
-      context.strokeRect(structureLeft, slabY, structureRight - structureLeft, Math.max(1.5, slabPixels));
-      const wallWidth = Math.min((structureRight - structureLeft) * 0.18, slabPixels);
-      const wallHeight = Math.min(18, displayHeight - bottomOfSlab - 6);
-      context.fillRect(structureLeft, bottomOfSlab, wallWidth, wallHeight);
-      context.fillRect(structureRight - wallWidth, bottomOfSlab, wallWidth, wallHeight);
-      if (structureRight - structureLeft > 34 && slabPixels > 18) {
-        caption('頂板', (structureLeft + structureRight) / 2, slabY + slabPixels / 2 + 4, '#102c42');
+      if (newCulvert) {
+        context.fillRect(structureLeft, slabY, width * scale, result.outerHeight * scale);
+        context.strokeRect(structureLeft, slabY, width * scale, result.outerHeight * scale);
+        const voidX = structureLeft + values.wall * scale;
+        context.fillStyle = '#f8fbfc';
+        context.fillRect(voidX, bottomOfSlab, values.innerWidth * scale, values.innerHeight * scale);
+        context.strokeRect(voidX, bottomOfSlab, values.innerWidth * scale, values.innerHeight * scale);
+        if (values.bedding > 0) {
+          context.fillStyle = '#b4b9b4';
+          context.fillRect(structureLeft, bottomOfStructure, width * scale, values.bedding * scale);
+          context.strokeRect(structureLeft, bottomOfStructure, width * scale, values.bedding * scale);
+        }
+        if (values.innerWidth * scale > 60 && values.innerHeight * scale > 24) {
+          caption('箱涵內空', (structureLeft + structureRight) / 2, bottomOfSlab + values.innerHeight * scale / 2 + 4);
+        }
+      } else {
+        context.fillRect(structureLeft, slabY, structureRight - structureLeft, Math.max(1.5, slabPixels));
+        context.strokeRect(structureLeft, slabY, structureRight - structureLeft, Math.max(1.5, slabPixels));
+        const wallWidth = Math.min((structureRight - structureLeft) * 0.18, slabPixels);
+        const wallHeight = Math.max(0, Math.min(18, displayHeight - bottomOfSlab - 6));
+        context.fillRect(structureLeft, bottomOfSlab, wallWidth, wallHeight);
+        context.fillRect(structureRight - wallWidth, bottomOfSlab, wallWidth, wallHeight);
+        if (structureRight - structureLeft > 34 && slabPixels > 18) {
+          caption('頂板', (structureLeft + structureRight) / 2, slabY + slabPixels / 2 + 4, '#102c42');
+        }
       }
 
       line([[pitLeft, 31], [pitRight, 31]], dimension);
@@ -365,6 +499,8 @@
       canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。`);
     }
 
+    for (const button of copyButtons) button.addEventListener('click', () => copyQuantity(button));
+    byId('copy-all').addEventListener('click', copyAll);
     form.addEventListener('input', update);
     form.addEventListener('submit', event => event.preventDefault());
     form.addEventListener('reset', () => requestAnimationFrame(update));
