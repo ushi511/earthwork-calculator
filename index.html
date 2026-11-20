@@ -91,7 +91,7 @@
 <body>
   <header><div class="header-inner">
     <h1>箱涵挖方計算機</h1>
-    <p>頂板修復與新設箱涵 · 開挖斷面與數量估算</p>
+    <p>頂板修復與新設箱涵 · 剖面面積計算</p>
   </div></header>
   <main>
     <section class="panel settings" aria-labelledby="settings-title">
@@ -106,7 +106,6 @@
           <label><input type="radio" name="method" value="slope"><span>放坡明挖</span></label>
         </fieldset>
         <div class="grid">
-          <label class="field"><span class="field-title">修復長度</span><span class="control"><input name="length" type="number" value="20" min="0.01" step="any" required><span class="unit">m</span></span></label>
           <label class="field" id="repair-width-field"><span class="field-title">構造物外寬</span><span class="control"><input name="width" type="number" value="2.10" min="0.01" step="any" required><span class="unit">m</span></span></label>
           <label class="field"><span class="field-title">地面至頂板頂面深度</span><span class="control"><input name="depth" type="number" value="1.80" min="0" step="any" required><span class="unit">m</span></span></label>
           <label class="field"><span class="field-title" id="slab-title">既有頂板厚度</span><span class="control"><input name="slab" type="number" value="0.30" min="0.01" step="any" required><span class="unit">m</span></span></label>
@@ -144,7 +143,7 @@
             <label class="field full"><span class="field-title">有價料所在位置</span><span class="control"><select name="valuablePosition"><option value="bottom" selected>開挖底部往上</option><option value="top">地表往下（含路面高程）</option></select></span></label>
           </div>
           <p class="hint" id="mill-hint">刨除寬度留空時採開挖頂寬。自訂寬度以構造物中心線對稱配置。</p>
-          <p class="hint">回填土與 CLSM 各占淨回填體積的 50%。有價料與 AC 或既有頂板重疊部分會自動扣除。</p>
+          <p class="hint">回填土與 CLSM 各占淨回填面積的 50%。有價料與 AC 或既有頂板重疊部分會自動扣除。</p>
         </details>
         <p id="error" class="error" role="status" hidden></p>
       </form>
@@ -170,46 +169,45 @@
         </div>
       </section>
       <section class="panel results" aria-labelledby="results-title">
-        <div class="bar"><h2 id="results-title">工程數量</h2><button class="copy-button" id="copy-all" type="button" disabled>複製五項</button></div>
+        <div class="bar"><h2 id="results-title">剖面面積</h2><button class="copy-button" id="copy-all" type="button" disabled>複製五項</button></div>
         <div class="results-grid">
-          <div class="metric"><h3>土方挖方</h3><output id="soil-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="soil" aria-label="複製土方挖方" disabled>複製</button></div>
-          <div class="metric"><h3>CLSM 回填</h3><output id="fill-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="fill" aria-label="複製CLSM 回填" disabled>複製</button></div>
-          <div class="metric"><h3>回填土</h3><output id="backfill-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="backfill" aria-label="複製回填土" disabled>複製</button></div>
-          <div class="metric"><h3>現地回用土方</h3><output id="reuse-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="reuse" aria-label="複製現地回用土方" disabled>複製</button></div>
-          <div class="metric"><h3>需外借回填土</h3><output id="borrow-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="borrow" aria-label="複製需外借回填土" disabled>複製</button></div>
-          <div class="metric"><h3 id="slab-metric-title">頂板打除</h3><output id="slab-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="slab" aria-label="複製頂板打除" disabled>複製</button></div>
-          <div class="metric"><h3>土方廢方</h3><output id="waste-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="waste" aria-label="複製土方廢方" disabled>複製</button></div>
-          <div class="metric"><h3>有價料扣除量</h3><output id="valuable-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="valuable" aria-label="複製有價料扣除量" disabled>複製</button></div>
-          <div class="metric"><h3>AC 刨除料</h3><output id="ac-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="ac" aria-label="複製AC 刨除料" disabled>複製</button></div>
-          <div class="metric"><h3>AC 刨除面積</h3><output id="area-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="area" aria-label="複製AC 刨除面積" disabled>複製</button></div>
-          <div class="metric" id="bedding-metric" hidden><h3>基礎墊層</h3><output id="bedding-qty">—</output><span class="unit">m³</span><button class="copy-button" type="button" data-copy-qty="bedding" aria-label="複製基礎墊層" disabled>複製</button></div>
+          <div class="metric"><h3>土方挖方</h3><output id="soil-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="soil" aria-label="複製土方挖方" disabled>複製</button></div>
+          <div class="metric"><h3>CLSM 回填</h3><output id="fill-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="fill" aria-label="複製CLSM 回填" disabled>複製</button></div>
+          <div class="metric"><h3>回填土</h3><output id="backfill-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="backfill" aria-label="複製回填土" disabled>複製</button></div>
+          <div class="metric"><h3>現地回用土方</h3><output id="reuse-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="reuse" aria-label="複製現地回用土方" disabled>複製</button></div>
+          <div class="metric"><h3>需外借回填土</h3><output id="borrow-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="borrow" aria-label="複製需外借回填土" disabled>複製</button></div>
+          <div class="metric"><h3 id="slab-metric-title">頂板打除</h3><output id="slab-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="slab" aria-label="複製頂板打除" disabled>複製</button></div>
+          <div class="metric"><h3>土方廢方</h3><output id="waste-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="waste" aria-label="複製土方廢方" disabled>複製</button></div>
+          <div class="metric"><h3>有價料扣除量</h3><output id="valuable-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="valuable" aria-label="複製有價料扣除量" disabled>複製</button></div>
+          <div class="metric"><h3>AC 刨除料</h3><output id="ac-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="ac" aria-label="複製AC 刨除料" disabled>複製</button></div>
+          <div class="metric"><h3>AC 刨除寬度</h3><output id="area-qty">—</output><span class="unit">m</span><button class="copy-button" type="button" data-copy-qty="area" aria-label="複製AC 刨除寬度" disabled>複製</button></div>
+          <div class="metric" id="bedding-metric" hidden><h3>基礎墊層</h3><output id="bedding-qty">—</output><span class="unit">m²</span><button class="copy-button" type="button" data-copy-qty="bedding" aria-label="複製基礎墊層" disabled>複製</button></div>
         </div>
         <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
         <details>
           <summary>查看計算式</summary>
           <dl id="formulas"></dl>
-          <p class="note" id="calculation-note">頂板以全寬、等厚打除及原尺寸復建計算。數量採幾何體積，未加鬆方係數。混凝土與 AC 分列，土方廢方不含兩者。</p>
+          <p class="note" id="calculation-note">頂板以全寬、等厚打除及原尺寸復建計算。採幾何剖面面積，未加鬆方係數。混凝土與 AC 分列，土方廢方不含兩者。</p>
         </details>
       </section>
     </div>
   </main>
   <script>
     function calculate(values) {
-      const { length, width, depth, slab, left, right, slope, deepen, ac, paving, millWidth, valuableDepth, valuablePosition } = values;
+      const { width, depth, slab, left, right, slope, deepen, ac, paving, millWidth, valuableDepth, valuablePosition } = values;
       const outerHeight = values.newCulvert ? slab + values.innerHeight + values.bottomSlab : slab;
       const height = values.newCulvert ? depth + outerHeight + values.bedding : depth + (deepen ? slab : 0);
       const bottom = width + left + right;
       const slopeRun = slope * height;
       const top = bottom + 2 * slopeRun;
-      const gross = (bottom + top) / 2 * height * length;
-      const slabVolume = width * slab * length;
-      const slabInPit = !values.newCulvert && deepen ? slabVolume : 0;
-      const structureVolume = values.newCulvert ? width * outerHeight * length : slabInPit;
-      const concreteVolume = values.newCulvert ? (width * outerHeight - values.innerWidth * values.innerHeight) * length : slabVolume;
-      const beddingVolume = values.newCulvert ? width * values.bedding * length : 0;
+      const gross = (bottom + top) / 2 * height;
+      const slabArea = width * slab;
+      const slabInPit = !values.newCulvert && deepen ? slabArea : 0;
+      const structureArea = values.newCulvert ? width * outerHeight : slabInPit;
+      const concreteArea = values.newCulvert ? (width * outerHeight - values.innerWidth * values.innerHeight) : slabArea;
+      const beddingArea = values.newCulvert ? width * values.bedding : 0;
       const millingWidth = millWidth ?? top;
-      const millingArea = millingWidth * length;
-      const acVolume = millingArea * ac;
+      const acArea = millingWidth * ac;
 
       const acDepth = Math.min(ac, values.newCulvert ? height : depth);
       function millingAreaToDepth(z) {
@@ -225,11 +223,11 @@
           return sum + start * z - correction;
         }, 0);
       }
-      const acInPit = millingAreaToDepth(acDepth) * length;
+      const acInPit = millingAreaToDepth(acDepth);
       const pavingDepth = Math.min(paving, depth);
-      const pavingInPit = pavingDepth * (top - slope * pavingDepth) * length;
+      const pavingInPit = pavingDepth * (top - slope * pavingDepth);
       const soil = Math.max(0, gross - slabInPit - acInPit);
-      const fillTotal = Math.max(0, gross - structureVolume - beddingVolume - pavingInPit);
+      const fillTotal = Math.max(0, gross - structureArea - beddingArea - pavingInPit);
       const fill = fillTotal / 2;
       const soilBackfill = fillTotal / 2;
       const valuableThickness = Math.min(height, valuableDepth);
@@ -237,18 +235,18 @@
       const valuableEnd = valuableStart + valuableThickness;
       const valuableTopWidth = top - 2 * slope * valuableStart;
       const valuableBottomWidth = top - 2 * slope * valuableEnd;
-      const valuableGross = (valuableTopWidth + valuableBottomWidth) / 2 * valuableThickness * length;
-      const valuableAC = (millingAreaToDepth(Math.min(acDepth, valuableEnd)) - millingAreaToDepth(Math.min(acDepth, valuableStart))) * length;
+      const valuableGross = (valuableTopWidth + valuableBottomWidth) / 2 * valuableThickness;
+      const valuableAC = (millingAreaToDepth(Math.min(acDepth, valuableEnd)) - millingAreaToDepth(Math.min(acDepth, valuableStart)));
       const valuableSlab = !values.newCulvert && deepen
-        ? width * Math.max(0, Math.min(height, valuableEnd) - Math.max(depth, valuableStart)) * length
+        ? width * Math.max(0, Math.min(height, valuableEnd) - Math.max(depth, valuableStart))
         : 0;
-      const valuableVolume = Math.min(soil, Math.max(0, valuableGross - valuableAC - valuableSlab));
-      const availableSoil = Math.max(0, soil - valuableVolume);
+      const valuableArea = Math.min(soil, Math.max(0, valuableGross - valuableAC - valuableSlab));
+      const availableSoil = Math.max(0, soil - valuableArea);
       const reusedSoil = Math.min(availableSoil, soilBackfill);
       const borrowedSoil = Math.max(0, soilBackfill - reusedSoil);
       const waste = Math.max(0, availableSoil - reusedSoil);
 
-      return { height, bottom, top, slopeRun, gross, slabVolume, slabInPit, outerHeight, structureVolume, concreteVolume, beddingVolume, millingWidth, millingArea, acVolume, acInPit, pavingInPit, soil, fillTotal, fill, soilBackfill, valuableThickness, valuableStart, valuableEnd, valuableTopWidth, valuableBottomWidth, valuableGross, valuableAC, valuableSlab, valuableVolume, availableSoil, reusedSoil, borrowedSoil, waste };
+      return { height, bottom, top, slopeRun, gross, slabArea, slabInPit, outerHeight, structureArea, concreteArea, beddingArea, millingWidth, acArea, acInPit, pavingInPit, soil, fillTotal, fill, soilBackfill, valuableThickness, valuableStart, valuableEnd, valuableTopWidth, valuableBottomWidth, valuableGross, valuableAC, valuableSlab, valuableArea, availableSoil, reusedSoil, borrowedSoil, waste };
     }
 
     const byId = id => document.getElementById(id);
@@ -257,12 +255,14 @@
     const canvas = byId('section');
     const formatter = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmt = value => formatter.format(value);
-    const formulaFormatter = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+    const formulaFormatter = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 3, maximumFractionDigits: 8 });
     const formulaFmt = value => formulaFormatter.format(value);
-    const lengths = ['length', 'width', 'depth', 'slab', 'left', 'right', 'ac', 'paving', 'valuableDepth', 'innerWidth', 'innerHeight', 'wall', 'bottomSlab', 'bedding'];
-    const quantities = { soil: 'soil', fill: 'fill', backfill: 'soilBackfill', reuse: 'reusedSoil', borrow: 'borrowedSoil', slab: 'concreteVolume', waste: 'waste', valuable: 'valuableVolume', ac: 'acVolume', area: 'millingArea', bedding: 'beddingVolume' };
+    const numericFields = ['width', 'depth', 'slab', 'left', 'right', 'ac', 'paving', 'valuableDepth', 'innerWidth', 'innerHeight', 'wall', 'bottomSlab', 'bedding'];
+    const quantities = { soil: 'soil', fill: 'fill', backfill: 'soilBackfill', reuse: 'reusedSoil', borrow: 'borrowedSoil', slab: 'concreteArea', waste: 'waste', valuable: 'valuableArea', ac: 'acArea', area: 'millingWidth', bedding: 'beddingArea' };
     const copyButtons = [...document.querySelectorAll('[data-copy-qty]')];
-    const copyFormat = new Intl.NumberFormat('zh-TW', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const copyFormat = new Intl.NumberFormat('zh-TW', { useGrouping: false, minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const areaFormatter = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const areaFmt = value => areaFormatter.format(value);
     let current = null;
 
     async function copyText(text, label) {
@@ -302,12 +302,12 @@
       const { values, result } = current;
       const selected = [
         ['挖方', result.soil],
+        ['構造物打除', values.newCulvert ? 0 : result.slabArea],
         ['廢方', result.waste],
-        ['回填土', result.soilBackfill],
-        ['CLSM回填', result.fill],
-        ['構造物打除', values.newCulvert ? 0 : result.slabVolume]
+        ['CLSM', result.fill],
+        ['回填土', result.soilBackfill]
       ];
-      const rows = selected.map(([name, value]) => [name, copyFormat.format(value), 'm³'].join('\t'));
+      const rows = selected.map(([name, value]) => `${name}: ${copyFormat.format(value)}m2`);
       copyText(rows.join('\n'), '五項工程數量');
     }
 
@@ -346,9 +346,9 @@
       byId('structure-legend').textContent = newCulvert ? '新設箱涵' : '既有頂板';
       byId('bedding-metric').hidden = !newCulvert;
       byId('calculation-note').textContent = newCulvert
-        ? '新設箱涵以完整外包體積（含內部空間）扣除回填，混凝土體積以外包減內空計算。墊層以箱涵外寬計算，數量未加鬆方係數。'
-        : '頂板以全寬、等厚打除及原尺寸復建計算。數量採幾何體積，未加鬆方係數。混凝土與 AC 分列。';
-      byId('calculation-note').textContent += ' 有價料按指定高程的實際梯形體積計算，扣除區間內的 AC 與既有頂板。回填土與 CLSM 各為淨回填體積的 50%，暫按其餘一般土方均適合回用；不足時另列外借回填土。廢方為一般土方扣除現地回用量。計算式保留最多 8 位小數，工程數量顯示至小數第 2 位。';
+        ? '新設箱涵以完整外包面積（含內部空間）扣除回填，混凝土面積以外包減內空計算。墊層以箱涵外寬計算，數量未加鬆方係數。'
+        : '頂板以全寬、等厚打除及原尺寸復建計算。採幾何剖面面積，未加鬆方係數。混凝土與 AC 分列。';
+      byId('calculation-note').textContent += ' 有價料按指定高程的實際梯形面積計算，扣除區間內的 AC 與既有頂板。回填土與 CLSM 各為淨回填面積的 50%，暫按其餘一般土方均適合回用；不足時另列外借回填土。廢方為一般土方扣除現地回用量。計算式保留最多 8 位小數，剖面面積顯示至小數第 3 位。';
       byId('slope-field').hidden = sheet;
       fields.slope.disabled = sheet;
       byId('clearance-title').textContent = sheet ? '構造物與鋼板樁間距' : '構造物與坡腳間距';
@@ -356,7 +356,7 @@
       byId('edge-legend').textContent = sheet ? '鋼板樁內側' : '開挖坡面';
 
       const invalid = Array.from(fields).find(field => field.willValidate && !field.validity.valid);
-      const values = Object.fromEntries(lengths.map(name => [name, fields.namedItem(name).valueAsNumber]));
+      const values = Object.fromEntries(numericFields.map(name => [name, fields.namedItem(name).valueAsNumber]));
       Object.assign(values, {
         newCulvert,
         valuablePosition: fields.valuablePosition.value,
@@ -384,7 +384,7 @@
         button.setAttribute('aria-label', '複製' + button.closest('.metric').querySelector('h3').textContent);
       }
       for (const [id, key] of Object.entries(quantities)) {
-        byId(`${id}-qty`).textContent = current ? fmt(result[key]) : '—';
+        byId(`${id}-qty`).textContent = current ? areaFmt(result[key]) : '—';
       }
       for (const [id, key] of [['left', 'left'], ['body', 'width'], ['right', 'right']]) {
         byId(`${id}-dim`).textContent = current ? `${fmt(values[key])} m` : '—';
@@ -400,35 +400,35 @@
         ] : []),
         ['開挖底寬', `${formulaFmt(values.width)} ＋ ${formulaFmt(values.left)} ＋ ${formulaFmt(values.right)} ＝ ${formulaFmt(result.bottom)} m`],
         ['開挖頂寬', `${formulaFmt(result.bottom)} ＋ 2 × ${formulaFmt(result.height)} × ${formulaFmt(values.slope)} ＝ ${formulaFmt(result.top)} m`],
-        ['開挖斷面體積', `（${formulaFmt(result.bottom)} ＋ ${formulaFmt(result.top)}）÷ 2 × ${formulaFmt(result.height)} × ${formulaFmt(values.length)} ＝ ${formulaFmt(result.gross)} m³`],
+        ['開挖斷面面積', `（${formulaFmt(result.bottom)} ＋ ${formulaFmt(result.top)}）÷ 2 × ${formulaFmt(result.height)} ＝ ${formulaFmt(result.gross)} m²`],
         ...(newCulvert ? [
-          ['土方挖方', `開挖斷面體積 ${formulaFmt(result.gross)} − 坑內 AC 刨除料 ${formulaFmt(result.acInPit)} ＝ ${formulaFmt(result.soil)} m³`],
-          ['淨回填體積', `開挖斷面體積 ${formulaFmt(result.gross)} − 箱涵外包體積 ${formulaFmt(result.structureVolume)} − 墊層 ${formulaFmt(result.beddingVolume)} − 路面復舊預留 ${formulaFmt(result.pavingInPit)} ＝ ${formulaFmt(result.fillTotal)} m³`],
-          ['箱涵混凝土', `（${formulaFmt(values.width)} × ${formulaFmt(result.outerHeight)} − ${formulaFmt(values.innerWidth)} × ${formulaFmt(values.innerHeight)}）× ${formulaFmt(values.length)} ＝ ${formulaFmt(result.concreteVolume)} m³`],
-          ['基礎墊層', `${formulaFmt(values.width)} × ${formulaFmt(values.bedding)} × ${formulaFmt(values.length)} ＝ ${formulaFmt(result.beddingVolume)} m³`]
+          ['土方挖方', `開挖斷面面積 ${formulaFmt(result.gross)} − 坑內 AC 刨除料 ${formulaFmt(result.acInPit)} ＝ ${formulaFmt(result.soil)} m²`],
+          ['淨回填面積', `開挖斷面面積 ${formulaFmt(result.gross)} − 箱涵外包面積 ${formulaFmt(result.structureArea)} − 墊層 ${formulaFmt(result.beddingArea)} − 路面復舊預留 ${formulaFmt(result.pavingInPit)} ＝ ${formulaFmt(result.fillTotal)} m²`],
+          ['箱涵混凝土', `（${formulaFmt(values.width)} × ${formulaFmt(result.outerHeight)} − ${formulaFmt(values.innerWidth)} × ${formulaFmt(values.innerHeight)}） ＝ ${formulaFmt(result.concreteArea)} m²`],
+          ['基礎墊層', `${formulaFmt(values.width)} × ${formulaFmt(values.bedding)} ＝ ${formulaFmt(result.beddingArea)} m²`]
         ] : [
-          ['土方挖方', `開挖斷面體積 ${formulaFmt(result.gross)} − 坑內既有頂板 ${formulaFmt(result.slabInPit)} − 坑內 AC 刨除料 ${formulaFmt(result.acInPit)} ＝ ${formulaFmt(result.soil)} m³`],
-          ['淨回填體積', `開挖斷面體積 ${formulaFmt(result.gross)} − 坑內復建頂板 ${formulaFmt(result.slabInPit)} − 路面復舊預留 ${formulaFmt(result.pavingInPit)} ＝ ${formulaFmt(result.fillTotal)} m³`],
-          ['頂板打除', `${formulaFmt(values.width)} × ${formulaFmt(values.slab)} × ${formulaFmt(values.length)} ＝ ${formulaFmt(result.slabVolume)} m³`]
+          ['土方挖方', `開挖斷面面積 ${formulaFmt(result.gross)} − 坑內既有頂板 ${formulaFmt(result.slabInPit)} − 坑內 AC 刨除料 ${formulaFmt(result.acInPit)} ＝ ${formulaFmt(result.soil)} m²`],
+          ['淨回填面積', `開挖斷面面積 ${formulaFmt(result.gross)} − 坑內復建頂板 ${formulaFmt(result.slabInPit)} − 路面復舊預留 ${formulaFmt(result.pavingInPit)} ＝ ${formulaFmt(result.fillTotal)} m²`],
+          ['頂板打除', `${formulaFmt(values.width)} × ${formulaFmt(values.slab)} ＝ ${formulaFmt(result.slabArea)} m²`]
         ]),
-        ['CLSM 回填', `${formulaFmt(result.fillTotal)} ÷ 2 ＝ ${formulaFmt(result.fill)} m³`],
-        ['回填土', `${formulaFmt(result.fillTotal)} ÷ 2 ＝ ${formulaFmt(result.soilBackfill)} m³`],
+        ['CLSM 回填', `${formulaFmt(result.fillTotal)} ÷ 2 ＝ ${formulaFmt(result.fill)} m²`],
+        ['回填土', `${formulaFmt(result.fillTotal)} ÷ 2 ＝ ${formulaFmt(result.soilBackfill)} m²`],
         ['有價料高程區間', `地表下 ${formulaFmt(result.valuableStart)} ～ ${formulaFmt(result.valuableEnd)} m，厚 ${formulaFmt(result.valuableThickness)} m`],
-        ['有價料層體積', `（${formulaFmt(result.valuableTopWidth)} ＋ ${formulaFmt(result.valuableBottomWidth)}）÷ 2 × ${formulaFmt(result.valuableThickness)} × ${formulaFmt(values.length)} ＝ ${formulaFmt(result.valuableGross)} m³`],
-        ['有價料扣除量', `max(0, ${formulaFmt(result.valuableGross)} − 區間內 AC ${formulaFmt(result.valuableAC)} − 區間內既有頂板 ${formulaFmt(result.valuableSlab)}) ＝ ${formulaFmt(result.valuableVolume)} m³`],
-        ['一般土方', `土方挖方 ${formulaFmt(result.soil)} − 有價料 ${formulaFmt(result.valuableVolume)} ＝ ${formulaFmt(result.availableSoil)} m³`],
-        ['現地回用土方', `min(一般土方 ${formulaFmt(result.availableSoil)}, 回填土需求 ${formulaFmt(result.soilBackfill)}) ＝ ${formulaFmt(result.reusedSoil)} m³`],
-        ['需外借回填土', `回填土需求 ${formulaFmt(result.soilBackfill)} − 現地回用 ${formulaFmt(result.reusedSoil)} ＝ ${formulaFmt(result.borrowedSoil)} m³`],
-        ['土方廢方', `土方挖方 ${formulaFmt(result.soil)} − 有價料 ${formulaFmt(result.valuableVolume)} − 現地回用 ${formulaFmt(result.reusedSoil)} ＝ ${formulaFmt(result.waste)} m³`],
-        ['AC 刨除料', `${formulaFmt(result.millingWidth)} × ${formulaFmt(values.length)} × ${formulaFmt(values.ac)} ＝ ${formulaFmt(result.acVolume)} m³`],
-        ['AC 刨除面積', `${formulaFmt(result.millingWidth)} × ${formulaFmt(values.length)} ＝ ${formulaFmt(result.millingArea)} m²`]
+        ['有價料層面積', `（${formulaFmt(result.valuableTopWidth)} ＋ ${formulaFmt(result.valuableBottomWidth)}）÷ 2 × ${formulaFmt(result.valuableThickness)} ＝ ${formulaFmt(result.valuableGross)} m²`],
+        ['有價料扣除量', `max(0, ${formulaFmt(result.valuableGross)} − 區間內 AC ${formulaFmt(result.valuableAC)} − 區間內既有頂板 ${formulaFmt(result.valuableSlab)}) ＝ ${formulaFmt(result.valuableArea)} m²`],
+        ['一般土方', `土方挖方 ${formulaFmt(result.soil)} − 有價料 ${formulaFmt(result.valuableArea)} ＝ ${formulaFmt(result.availableSoil)} m²`],
+        ['現地回用土方', `min(一般土方 ${formulaFmt(result.availableSoil)}, 回填土需求 ${formulaFmt(result.soilBackfill)}) ＝ ${formulaFmt(result.reusedSoil)} m²`],
+        ['需外借回填土', `回填土需求 ${formulaFmt(result.soilBackfill)} − 現地回用 ${formulaFmt(result.reusedSoil)} ＝ ${formulaFmt(result.borrowedSoil)} m²`],
+        ['土方廢方', `土方挖方 ${formulaFmt(result.soil)} − 有價料 ${formulaFmt(result.valuableArea)} − 現地回用 ${formulaFmt(result.reusedSoil)} ＝ ${formulaFmt(result.waste)} m²`],
+        ['AC 刨除料', `${formulaFmt(result.millingWidth)} × ${formulaFmt(values.ac)} ＝ ${formulaFmt(result.acArea)} m²`],
+        ['AC 刨除寬度', `${formulaFmt(result.millingWidth)} m`]
       ] : [['計算式', '請先輸入有效尺寸。']]);
       draw();
     }
 
     function fillSplitDepth(values, result) {
       const pavement = Math.min(values.paving, values.depth);
-      const target = result.soilBackfill / values.length;
+      const target = result.soilBackfill;
       const slope = values.slope;
       const top = result.top;
       const occupiedWidth = values.newCulvert || values.deepen ? values.width : 0;
@@ -643,7 +643,7 @@
         context.restore();
       }
 
-      canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。AC 刨除厚度 ${fmt(values.ac)} 公尺，回填土及 CLSM 各 ${fmt(result.fill)} 立方公尺。`);
+      canvas.setAttribute('aria-label', `開挖斷面。頂寬 ${fmt(top)} 公尺，開挖深度 ${fmt(height)} 公尺，左側淨距 ${fmt(left)} 公尺，右側淨距 ${fmt(right)} 公尺。AC 刨除厚度 ${fmt(values.ac)} 公尺，回填土及 CLSM 各 ${areaFmt(result.fill)} 平方公尺。`);
     }
 
     const inputStorageKey = 'earthwork-calculator:inputs:v1';
